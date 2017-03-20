@@ -37,6 +37,7 @@ readStream.on('data', function(chunk) {
   var substringLev3;
   var substringLev4;
   var innerCoords;
+  var innerCoordsLev2;
 
   for(var i=0;i<coordinates.length;i++){
     objToStore = {};
@@ -48,13 +49,21 @@ readStream.on('data', function(chunk) {
     substringLev2 = substringLev1_5.replace(/<outerBoundaryIs>/g, '').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
     substringLev2_5 = substringLev2.replace(/\t/g,'');
     if (substringLev2_5.indexOf('innerBoundaryIs') != -1) {
-      innerCoords = substringLev2_5.match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g).toString();
-      console.log(innerCoords);
-      // substringLev2_25 = substringLev2.replace(/<innerBoundaryIs>/g,'').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
-      // substringLev4 = substringLev3.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/innerBoundaryIs>/g, '|');
+      innerCoords = substringLev2_5
+                      .match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g)
+                      .toString()
+                      .replace(/<\/coordinates><\/LinearRing>/g, '')
+                      .replace(/<innerBoundaryIs>/g, '')
+                      .replace(/<\/innerBoundaryIs>/g, '|')
+                      .split('|');
+
+      innerCoords.splice(innerCoords.length-1, 1);
+      objToStore.innerBoundaries = [];
+      for (var k=0;k<innerCoords.length;k++) {
+        objToStore.innerBoundaries[k] = createPolyObject(innerCoords[k].split(" "));
+      }
     }
     substringLev3 = substringLev2_5.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/outerBoundaryIs>/g, '|');
-
 
     coordsArray = substringLev3.split("|");
     coordsArray.splice(coordsArray.length-1, 1);
@@ -84,6 +93,9 @@ function createPolyObject(arr) {
   var polyArray = [];
 
   for (var i=0; i<arr.length-1;i++) {
+    if( arr[i][0] == "," ) {
+      arr[i] = arr[i].replace(",", "");
+    }
     polyArray.push({
       lat: parseFloat(arr[i].split(',')[1]),
       lng: parseFloat(arr[i].split(',')[0])
