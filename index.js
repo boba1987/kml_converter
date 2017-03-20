@@ -11,7 +11,8 @@ db.once('open', function() {
 var dbSchema = mongoose.Schema({
     name: String,
     description: String,
-    coordinates: Array
+    coordinates: Array,
+    innerBoundaries: Array
 });
 
 var Area = mongoose.model('Area', dbSchema);
@@ -35,6 +36,7 @@ readStream.on('data', function(chunk) {
   var substringLev2_5;
   var substringLev3;
   var substringLev4;
+  var innerCoords;
 
   for(var i=0;i<coordinates.length;i++){
     objToStore = {};
@@ -44,12 +46,17 @@ readStream.on('data', function(chunk) {
     substringLev1 = coordinates[i].match(/<MultiGeometry>(.*?)<\/MultiGeometry>/g).toString().replace(/<\/?MultiGeometry>/g,'');
     substringLev1_5 = substringLev1.replace(/<\/Polygon>/g, '').replace(/<Polygon>/g,'')
     substringLev2 = substringLev1_5.replace(/<outerBoundaryIs>/g, '').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
-    substringLev2_25 = substringLev2.replace(/<innerBoundaryIs>/g,'').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
-    substringLev2_5 = substringLev2_25.replace(/\t/g,'');
+    substringLev2_5 = substringLev2.replace(/\t/g,'');
+    if (substringLev2_5.indexOf('innerBoundaryIs') != -1) {
+      innerCoords = substringLev2_5.match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g).toString();
+      console.log(innerCoords);
+      // substringLev2_25 = substringLev2.replace(/<innerBoundaryIs>/g,'').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
+      // substringLev4 = substringLev3.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/innerBoundaryIs>/g, '|');
+    }
     substringLev3 = substringLev2_5.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/outerBoundaryIs>/g, '|');
-    substringLev4 = substringLev3.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/innerBoundaryIs>/g, '|');
 
-    coordsArray = substringLev4.split("|");
+
+    coordsArray = substringLev3.split("|");
     coordsArray.splice(coordsArray.length-1, 1);
 
     if(coordsArray.length == 1) {
@@ -69,8 +76,6 @@ readStream.on('data', function(chunk) {
       objToMongo.save(function(err, obj){
         if (err) return console.error(err);
       });
-
-      console.log(i);
     }
   }
 });
