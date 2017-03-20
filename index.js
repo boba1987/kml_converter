@@ -48,44 +48,34 @@ readStream.on('data', function(chunk) {
     substringLev1_5 = substringLev1.replace(/<\/Polygon>/g, '').replace(/<Polygon>/g,'')
     substringLev2 = substringLev1_5.replace(/<outerBoundaryIs>/g, '').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
     substringLev2_5 = substringLev2.replace(/\t/g,'');
-    if (substringLev2_5.indexOf('innerBoundaryIs') != -1) {
-      innerCoords = substringLev2_5
-                      .match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g)
-                      .toString()
-                      .replace(/<\/coordinates><\/LinearRing>/g, '')
-                      .replace(/<innerBoundaryIs>/g, '')
-                      .replace(/<\/innerBoundaryIs>/g, '|')
-                      .split('|');
-
-      innerCoords.splice(innerCoords.length-1, 1);
-      objToStore.innerBoundaries = [];
-      for (var k=0;k<innerCoords.length;k++) {
-        objToStore.innerBoundaries[k] = createPolyObject(innerCoords[k].split(" "));
-      }
-    }
     substringLev3 = substringLev2_5.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/outerBoundaryIs>/g, '|');
-
     coordsArray = substringLev3.split("|");
     coordsArray.splice(coordsArray.length-1, 1);
+    // if (substringLev2_5.indexOf('innerBoundaryIs') != -1) {
+    //   innerCoords = substringLev2_5
+    //                   .match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g)
+    //                   .toString()
+    //                   .replace(/<\/coordinates><\/LinearRing>/g, '')
+    //                   .replace(/<innerBoundaryIs>/g, '')
+    //                   .replace(/<\/innerBoundaryIs>/g, '|')
+    //                   .split('|');
+    //
+    //   innerCoords.splice(innerCoords.length-1, 1);
+    //   objToStore.innerBoundaries = [];
+    //   for (var k=0;k<innerCoords.length;k++) {
+    //     objToStore.innerBoundaries[k] = createPolyObject(innerCoords[k].split(" "));
+    //   }
+    // }
 
-    if(coordsArray.length == 1) {
-      objToStore.coordinates = createPolyObject(coordsArray[0].split(" "));
-
-      objToMongo = new Area(objToStore);
-      objToMongo.save(function(err, obj){
-        if (err) return console.error(err);
-      });
-    } else {
-      objToStore.coordinates = [];
-      for (var j=0;j<coordsArray.length;j++) {
-        objToStore.coordinates[j] = createPolyObject(coordsArray[j].split(" "));
-      }
-
-      objToMongo = new Area(objToStore);
-      objToMongo.save(function(err, obj){
-        if (err) return console.error(err);
-      });
+    objToStore.coordinates = [];
+    for (var j=0;j<coordsArray.length;j++) {
+      objToStore.coordinates[j] = createPolyObject(coordsArray[j].split(" "));
     }
+
+    objToMongo = new Area(objToStore);
+    objToMongo.save(function(err, obj){
+      if (err) return console.error(err);
+    });
   }
 });
 
