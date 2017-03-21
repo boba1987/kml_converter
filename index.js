@@ -18,7 +18,7 @@ var dbSchema = mongoose.Schema({
 var Area = mongoose.model('Area', dbSchema);
 
 var data = '';
-var readStream = fs.createReadStream('CHE_adm1.kml', 'utf8');
+var readStream = fs.createReadStream('Grau.kml', 'utf8');
 
 readStream.on('data', function(chunk) {
     data += chunk;
@@ -60,7 +60,8 @@ readStream.on('data', function(chunk) {
         coordsArray[j] = coordsArray[j].replace(/<innerBoundaryIs>/g, '').replace(/<\/innerBoundaryIs>/g, '|').split("|");
         coordsArray[j].splice(coordsArray[j].length-1, 1);
         for(var k=0;k<coordsArray[j].length;k++) {
-          objToStore.innerBoundaries.push( createPolyObject(coordsArray[j][k].split(" ")));
+          objToStore.innerBoundaries.push( createPolyObject(coordsArray[j][k].split(" "))); // Push into innerBoundaries
+          objToStore.coordinates[j-1].unshift( createPolyObject(coordsArray[j][k].split(" ")) ); // Push into previous 'coordinates' prop
         }
       } else {
         objToStore.coordinates[j] = createPolyObject(coordsArray[j].split(" "));
@@ -88,10 +89,14 @@ function createPolyObject(arr) {
     if( arr[i][0] == "," ) {
       arr[i] = arr[i].replace(",", "");
     }
-    polyArray.push({
-      lat: parseFloat(arr[i].split(',')[1]),
-      lng: parseFloat(arr[i].split(',')[0])
-    })
+    if(!isNaN(parseFloat(arr[i].split(',')[1]))) {
+      polyArray.push({
+        lat: parseFloat(arr[i].split(',')[1]),
+        lng: parseFloat(arr[i].split(',')[0])
+      })
+    } else {
+      console.log("This produces NaN: ", arr[i].split(',')[1] );
+    }
   };
 
   return polyArray;
