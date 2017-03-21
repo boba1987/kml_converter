@@ -51,22 +51,6 @@ readStream.on('data', function(chunk) {
     substringLev1 = substringLev1.replace(/\t/g,'');
     substringLev1 = substringLev1.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/outerBoundaryIs>/g, '|');
     coordsArray = substringLev1.split("|");
-    //coordsArray.splice(coordsArray.length-1, 1);
-    // if (substringLev2_5.indexOf('innerBoundaryIs') != -1) {
-    //   innerCoords = substringLev2_5
-    //                   .match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g)
-    //                   .toString()
-    //                   .replace(/<\/coordinates><\/LinearRing>/g, '')
-    //                   .replace(/<innerBoundaryIs>/g, '')
-    //                   .replace(/<\/innerBoundaryIs>/g, '|')
-    //                   .split('|');
-    //
-    //   innerCoords.splice(innerCoords.length-1, 1);
-    //   objToStore.innerBoundaries = [];
-    //   for (var k=0;k<innerCoords.length;k++) {
-    //     objToStore.innerBoundaries[k] = createPolyObject(innerCoords[k].split(" "));
-    //   }
-    // }
 
     objToStore.coordinates = [];
     objToStore.innerBoundaries = [];
@@ -76,12 +60,19 @@ readStream.on('data', function(chunk) {
         coordsArray[j] = coordsArray[j].replace(/<innerBoundaryIs>/g, '').replace(/<\/innerBoundaryIs>/g, '|').split("|");
         coordsArray[j].splice(coordsArray[j].length-1, 1);
         for(var k=0;k<coordsArray[j].length;k++) {
-          objToStore.innerBoundaries.push( createPolyObject(coordsArray[j][k].split(" "))) ;
+          objToStore.innerBoundaries.push( createPolyObject(coordsArray[j][k].split(" ")));
         }
       } else {
         objToStore.coordinates[j] = createPolyObject(coordsArray[j].split(" "));
       }
     }
+
+    // If there is empty array in 'objToStore' delete it
+    objToStore.coordinates.forEach(function(coord, index){
+      if(!coord.length) {
+        objToStore.coordinates.splice(index, 1);
+      }
+    });
 
     objToMongo = new Area(objToStore);
     objToMongo.save(function(err, obj){
