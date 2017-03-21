@@ -38,6 +38,7 @@ readStream.on('data', function(chunk) {
   var substringLev4;
   var innerCoords;
   var innerCoordsLev2;
+  var temp = [];
 
   for(var i=0;i<coordinates.length;i++){
     objToStore = {};
@@ -45,12 +46,12 @@ readStream.on('data', function(chunk) {
     objToStore.description = coordinates[i].match(/<description>(.*?)<\/description>/g).toString().replace(/<\/?description>/g,'');
 
     substringLev1 = coordinates[i].match(/<MultiGeometry>(.*?)<\/MultiGeometry>/g).toString().replace(/<\/?MultiGeometry>/g,'');
-    substringLev1_5 = substringLev1.replace(/<\/Polygon>/g, '').replace(/<Polygon>/g,'')
-    substringLev2 = substringLev1_5.replace(/<outerBoundaryIs>/g, '').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
-    substringLev2_5 = substringLev2.replace(/\t/g,'');
-    substringLev3 = substringLev2_5.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/outerBoundaryIs>/g, '|');
-    coordsArray = substringLev3.split("|");
-    coordsArray.splice(coordsArray.length-1, 1);
+    substringLev1 = substringLev1.replace(/<\/Polygon>/g, '').replace(/<Polygon>/g,'');
+    substringLev1 = substringLev1.replace(/<outerBoundaryIs>/g, '').replace(/<LinearRing>/g, '').replace(/<coordinates>/g, '');
+    substringLev1 = substringLev1.replace(/\t/g,'');
+    substringLev1 = substringLev1.replace(/<\/coordinates>/g,'').replace(/<\/LinearRing>/g, '').replace(/<\/outerBoundaryIs>/g, '|');
+    coordsArray = substringLev1.split("|");
+    //coordsArray.splice(coordsArray.length-1, 1);
     // if (substringLev2_5.indexOf('innerBoundaryIs') != -1) {
     //   innerCoords = substringLev2_5
     //                   .match(/<innerBoundaryIs>(.*?)<\/innerBoundaryIs>/g)
@@ -68,8 +69,18 @@ readStream.on('data', function(chunk) {
     // }
 
     objToStore.coordinates = [];
+    objToStore.innerBoundaries = [];
+    var temp = [];
     for (var j=0;j<coordsArray.length;j++) {
-      objToStore.coordinates[j] = createPolyObject(coordsArray[j].split(" "));
+      if (coordsArray[j].indexOf('innerBoundaryIs') != -1) {
+        coordsArray[j] = coordsArray[j].replace(/<innerBoundaryIs>/g, '').replace(/<\/innerBoundaryIs>/g, '|').split("|");
+        coordsArray[j].splice(coordsArray[j].length-1, 1);
+        for(var k=0;k<coordsArray[j].length;k++) {
+          objToStore.innerBoundaries.push( createPolyObject(coordsArray[j][k].split(" "))) ;
+        }
+      } else {
+        objToStore.coordinates[j] = createPolyObject(coordsArray[j].split(" "));
+      }
     }
 
     objToMongo = new Area(objToStore);
