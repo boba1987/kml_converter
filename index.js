@@ -12,13 +12,14 @@ var dbSchema = mongoose.Schema({
     name: String,
     description: String,
     coordinates: Array,
-    innerBoundaries: Array
+    innerBoundaries: Array,
+    pageImpressions: String
 });
 
 var Area = mongoose.model('Area', dbSchema);
 
 var data = '';
-var readStream = fs.createReadStream('Grau.kml', 'utf8');
+var readStream = fs.createReadStream('CHE_adm3.kml', 'utf8');
 
 readStream.on('data', function(chunk) {
     data += chunk;
@@ -43,6 +44,7 @@ readStream.on('data', function(chunk) {
   for(var i=0;i<coordinates.length;i++){
     objToStore = {};
     objToStore.name = coordinates[i].match(/<name>(.*?)<\/name>/g).toString().replace(/<\/?name>/g,'');
+    objToStore.pageImpressions = randomIntFromInterval(1000, 100000).toString();
     objToStore.description = coordinates[i].match(/<description>(.*?)<\/description>/g).toString().replace(/<\/?description>/g,'');
 
     substringLev1 = coordinates[i].match(/<MultiGeometry>(.*?)<\/MultiGeometry>/g).toString().replace(/<\/?MultiGeometry>/g,'');
@@ -82,6 +84,10 @@ readStream.on('data', function(chunk) {
   }
 });
 
+function randomIntFromInterval(min,max) {
+    return Math.floor(Math.random()*(max-min+1)+min);
+}
+
 function createPolyObject(arr) {
   var polyArray = [];
 
@@ -91,8 +97,8 @@ function createPolyObject(arr) {
     }
     if(!isNaN(parseFloat(arr[i].split(',')[1]))) {
       polyArray.push({
-        lat: parseFloat(arr[i].split(',')[1]),
-        lng: parseFloat(arr[i].split(',')[0])
+        lat: parseFloat(arr[i].split(',')[1]) - 0.0028,
+        lng: parseFloat(arr[i].split(',')[0]) - 0.00095
       })
     } else {
       console.log("This produces NaN: ", arr[i].split(',')[1] );
@@ -101,15 +107,3 @@ function createPolyObject(arr) {
 
   return polyArray;
 }
-
-// // find each area with a description matching 'Commune'
-// var query = Area.find({ 'description': 'Canton|Kanton|Chantun' });
-//
-// // selecting the `name`
-// query.select('name');
-//
-// // execute the query at a later time
-// query.exec(function (err, area) {
-//   if (err) return handleError(err);
-//   console.log('*****************************', area) // Space Ghost is a talk show host.
-// });
