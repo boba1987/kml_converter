@@ -1,6 +1,6 @@
 var fs = require('fs');
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/geoDb');
+mongoose.connect('mongodb://localhost/geodb');
 var db = mongoose.connection;
 
 db.on('error', console.error.bind(console, 'connection error:'));
